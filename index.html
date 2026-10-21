@@ -1,287 +1,192 @@
-<!DOCTYPE html>
 
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Adumbi - AI rick rolling Website</title>
-
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Metro Rush</title>
 <style>
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0b1020;
-  color: white;
-  min-height: 100vh;
-}
-
-nav {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px 7%;
-  border-bottom: 1px solid #28304a;
-}
-
-.logo {
-  font-size: 28px;
-  font-weight: bold;
-}
-
-.logo span { color: #7c8cff; }
-
-.badge {
-  background: #18213d;
-  padding: 8px 14px;
-  border-radius: 20px;
-  color: #aab4ff;
-}
-
-main {
-  max-width: 850px;
-  margin: auto;
-  padding: 70px 20px;
-  text-align: center;
-}
-
-h1 {
-  font-size: clamp(42px, 7vw, 72px);
-}
-
-.gradient {
-  background: linear-gradient(90deg, #8c7bff, #39d9ff);
-  -webkit-background-clip: text;
-  color: transparent;
-}
-
-.subtitle {
-  color: #aeb7d0;
-  font-size: 18px;
-  margin-bottom: 40px;
-}
-
-.builder {
-  background: #131a2e;
-  border: 1px solid #293454;
-  padding: 20px;
-  border-radius: 20px;
-}
-
-textarea {
-  width: 100%;
-  height: 120px;
-  background: #0b1020;
-  border: 1px solid #354166;
-  border-radius: 12px;
-  padding: 16px;
-  color: white;
-  font-size: 16px;
-}
-
-button {
-  margin-top: 15px;
-  padding: 15px 28px;
-  border: none;
-  border-radius: 12px;
-  background: linear-gradient(90deg, #756cff, #38cfff);
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-#status {
-  margin-top: 30px;
-  text-align: left;
-  display: none;
-}
-
-.status-line {
-  padding: 10px;
-  color: #9effc3;
-}
-
-.reveal {
-  display: none;
-  margin-top: 30px;
-  padding: 30px;
-  border-radius: 20px;
-  background: #131a2e;
-}
-
-#prankPage {
-  display: none;
-  min-height: 100vh;
-  text-align: center;
-  padding: 30px;
-}
-
-iframe {
-  width: min(900px, 95vw);
-  aspect-ratio: 16 / 9;
-  border: none;
-  border-radius: 15px;
-}
-
-.stop {
-  background: #444;
-}
+*{box-sizing:border-box}
+body{margin:0;background:#101827;color:white;font-family:system-ui;text-align:center}
+h1{margin:12px 0;font-size:27px}
+.stats{display:flex;justify-content:center;gap:35px;font-weight:bold;margin:8px}
+canvas{display:block;width:min(100%,420px);height:auto;margin:auto;border-radius:14px;touch-action:none}
+button{font-size:17px;font-weight:bold;padding:12px;border:0;border-radius:12px;background:#a3e635;color:#17220b;cursor:pointer}
+.controls{max-width:420px;margin:10px auto;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 8px}
+.extra{display:flex;justify-content:center;gap:8px;margin:8px}
+#message{font-weight:bold;min-height:24px}
 </style>
-
 </head>
-
 <body>
-
-<div id="mainPage">
-
-<nav>
-  <div class="logo">Ad<span>umbi</span></div>
-  <div class="badge">● AI rick roll Website Builder</div>
-</nav>
-
-<main>
-
-<h1>Build websites with <span class="gradient">AI.</span></h1>
-
-<p class="subtitle">
-Describe your dream rick rolling website and Adumbi will bring it to life.
-</p>
-
-<div class="builder">
-
-<textarea
-id="idea"
-placeholder="Example: Make me an awesome website to rick roll my friends computer."
-></textarea>
-
-<br>
-
-<button onclick="buildWebsite()">Generate Website</button>
-
-<div id="status"></div>
-
-<div class="reveal" id="reveal">
-
-<h2>Website Generated!</h2>
-
-<p>Adumbi has finished building your website...</p>
-
-<button onclick="startPrank()">Open Website</button>
-
+<h1>🚇 METRO RUSH</h1>
+<div class="stats">
+  <span>🏆 Score: <b id="score">0</b></span>
+  <span>🪙 Coins: <b id="coins">0</b></span>
 </div>
-
+<canvas id="game" width="420" height="600"></canvas>
+<div id="message">Swipe to move, or press START!</div>
+<div class="controls">
+  <button onclick="move(-1)">⬅ LEFT</button>
+  <button onclick="jump()">⬆ JUMP</button>
+  <button onclick="move(1)">RIGHT ➡</button>
 </div>
-
-</main>
+<div class="extra">
+  <button onclick="slide()">⬇ SLIDE</button>
+  <button onclick="startGame()">▶ START / RESTART</button>
 </div>
-
-<div id="prankPage">
-
-<h1>You got Rick rolled!</h1>
-
-<iframe
-id="video"
-src=""
-allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-allowfullscreen>
-</iframe>
-
-<br>
-
-<button class="stop" onclick="stopPrank()">
-Stop prank
-</button>
-
-</div>
-
 <script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const W=420,H=600;
+let running=false,playerLane=1,playerY=0,jumpV=0,sliding=0;
+let obstacles=[],coins=[],score=0,coinCount=0,speed=5,spawn=0;
+let last=0,raf=0;
+const laneX=[105,210,315];
 
-function buildWebsite() {
+function reset(){
+  cancelAnimationFrame(raf);
+  running=true;playerLane=1;playerY=0;jumpV=0;sliding=0;
+  obstacles=[];coins=[];score=0;coinCount=0;speed=5;spawn=35;last=0;
+  document.getElementById("message").textContent="Dodge obstacles and collect coins!";
+  raf=requestAnimationFrame(loop);
+}
+function move(d){if(!running)return;playerLane=Math.max(0,Math.min(2,playerLane+d))}
+function jump(){if(running&&playerY===0&&sliding===0)jumpV=17}
+function slide(){if(running&&playerY===0)sliding=35}
 
-  const status = document.getElementById("status");
-  const reveal = document.getElementById("reveal");
-
-  status.innerHTML = "";
-  status.style.display = "block";
-  reveal.style.display = "none";
-
-  const messages = [
-    "✓ Understanding your idea...",
-    "✓ Generating HTML...",
-    "✓ Adding CSS magic...",
-    "✓ Writing JavaScript...",
-    "✓ Finalizing website..."
-  ];
-
-  messages.forEach((message, index) => {
-
-    setTimeout(() => {
-
-      const line = document.createElement("div");
-
-      line.className = "status-line";
-      line.textContent = message;
-
-      status.appendChild(line);
-
-      if (index === messages.length - 1) {
-
-        setTimeout(() => {
-          reveal.style.display = "block";
-        }, 500);
-
-      }
-
-    }, index * 600);
-
+function addObstacle(){
+  const lane=Math.floor(Math.random()*3);
+  const type=["barrier","train","sign"][Math.floor(Math.random()*3)];
+  obstacles.push({lane,y:-70,type});
+  const coinLane=Math.floor(Math.random()*3);
+  for(let i=0;i<4;i++)coins.push({lane:coinLane,y:-130-i*42,taken:false});
+}
+function drawBackground(){
+  let sky=ctx.createLinearGradient(0,0,0,H);
+  sky.addColorStop(0,"#36a9ee");sky.addColorStop(.55,"#b7e8ff");sky.addColorStop(1,"#e8b06a");
+  ctx.fillStyle=sky;ctx.fillRect(0,0,W,H);
+  for(let i=0;i<12;i++){
+    let x=i*38;
+    let h=50+(i*31)%80;
+    ctx.fillStyle=i%2?"#7babc1":"#a1c8d1";
+    ctx.fillRect(x,180-h,32,h);
+    for(let y=190-h;y<170;y+=17){
+      ctx.fillStyle="#e5f8ff";ctx.fillRect(x+7,y,6,7);
+      ctx.fillRect(x+20,y,6,7);
+    }
+  }
+  ctx.fillStyle="#515968";
+  ctx.beginPath();ctx.moveTo(155,120);ctx.lineTo(265,120);ctx.lineTo(420,600);ctx.lineTo(0,600);ctx.fill();
+  ctx.strokeStyle="#d6dce1";ctx.lineWidth=5;
+  ctx.beginPath();ctx.moveTo(175,120);ctx.lineTo(45,600);ctx.moveTo(245,120);ctx.lineTo(375,600);ctx.stroke();
+  ctx.strokeStyle="#9ba6af";ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(195,120);ctx.lineTo(145,600);ctx.moveTo(225,120);ctx.lineTo(275,600);ctx.stroke();
+  ctx.strokeStyle="#8c7767";ctx.lineWidth=5;
+  for(let y=150;y<600;y+=40){ctx.beginPath();ctx.moveTo(150,y);ctx.lineTo(270,y);ctx.stroke()}
+}
+function drawPlayer(){
+  const x=laneX[playerLane],y=500-playerY;
+  ctx.fillStyle="#0004";ctx.beginPath();ctx.ellipse(x,510,24,7,0,0,Math.PI*2);ctx.fill();
+  if(sliding>0){
+    ctx.fillStyle="#f28a3b";ctx.fillRect(x-28,y-23,56,24);
+    ctx.fillStyle="#bd8058";ctx.beginPath();ctx.arc(x+18,y-25,13,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#273449";ctx.fillRect(x-30,y-3,24,8);ctx.fillRect(x+5,y-3,24,8);
+  }else{
+    ctx.fillStyle="#2464a5";ctx.fillRect(x-15,y-35,12,33);ctx.fillRect(x+4,y-35,12,33);
+    ctx.fillStyle="#182d4b";ctx.fillRect(x-19,y-5,20,8);ctx.fillRect(x+1,y-5,20,8);
+    ctx.fillStyle="#f28a3b";ctx.fillRect(x-20,y-75,40,42);
+    ctx.fillStyle="#f8f5e8";ctx.fillRect(x-25,y-73,10,30);ctx.fillRect(x+15,y-73,10,30);
+    ctx.fillStyle="#bd8058";ctx.beginPath();ctx.arc(x,y-88,16,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#30263b";ctx.beginPath();ctx.arc(x,y-92,16,Math.PI,Math.PI*2);ctx.fill();
+    ctx.fillStyle="#ef4444";ctx.fillRect(x-17,y-105,34,9);
+    ctx.fillStyle="#172033";ctx.fillRect(x-6,y-89,3,3);ctx.fillRect(x+5,y-89,3,3);
+  }
+}
+function drawObjects(){
+  obstacles.forEach(o=>{
+    let x=laneX[o.lane],y=o.y;
+    if(o.type==="train"){
+      ctx.fillStyle="#2679c5";ctx.fillRect(x-32,y-80,64,100);
+      ctx.fillStyle="#152f4f";ctx.fillRect(x-24,y-70,48,32);
+      ctx.fillStyle="#65d4f5";ctx.fillRect(x-24,y-32,48,24);
+      ctx.fillStyle="#ffe16b";ctx.fillRect(x-23,y+8,13,5);ctx.fillRect(x+10,y+8,13,5);
+    }else if(o.type==="barrier"){
+      ctx.fillStyle="#e23d45";ctx.fillRect(x-32,y-25,64,30);
+      ctx.strokeStyle="#fff0d0";ctx.lineWidth=7;
+      ctx.beginPath();ctx.moveTo(x-25,y-25);ctx.lineTo(x-5,y+5);ctx.moveTo(x+3,y-25);ctx.lineTo(x+23,y+5);ctx.stroke();
+    }else{
+      ctx.fillStyle="#e23d45";ctx.fillRect(x-35,y-45,70,12);
+      ctx.fillStyle="white";ctx.font="bold 10px Arial";ctx.textAlign="center";ctx.fillText("SLIDE",x,y-35);
+      ctx.fillStyle="#9b5a37";ctx.fillRect(x-29,y-33,5,35);ctx.fillRect(x+24,y-33,5,35);
+    }
   });
-
+  coins.forEach(c=>{
+    if(c.taken)return;
+    ctx.fillStyle="#facc15";ctx.beginPath();ctx.arc(laneX[c.lane],c.y,10,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#fff2a6";ctx.lineWidth=3;ctx.stroke();
+    ctx.fillStyle="#a16207";ctx.font="bold 12px Arial";ctx.textAlign="center";ctx.fillText("$",laneX[c.lane],c.y+4);
+  });
 }
+function draw(){
+  drawBackground();drawObjects();drawPlayer();
+  ctx.fillStyle="#102033";ctx.fillRect(12,12,112,30);
+  ctx.fillStyle="white";ctx.font="bold 13px Arial";ctx.textAlign="left";
+  ctx.fillText("SPEED "+speed.toFixed(1),22,32);
+}
+function endGame(){
+  running=false;
+  document.getElementById("message").textContent="💥 GAME OVER! Score: "+score+" | Press START to try again.";
+  draw();
+}
+function loop(t){
+  if(!running)return;
+  let dt=Math.min((t-(last||t))/16.67,2);last=t;
+  score+=Math.max(1,Math.floor(speed/5));
+  speed=Math.min(12,speed+0.001*dt);
+  document.getElementById("score").textContent=score;
+  document.getElementById("coins").textContent=coinCount;
 
-
-function startPrank() {
-
-  const video = document.getElementById("video");
-
-  // Load video immediately from the user's button click
-  video.src =
-    "https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&playsinline=1";
-
-  document.getElementById("mainPage").style.display = "none";
-  document.getElementById("prankPage").style.display = "block";
-
-  // Request fullscreen
-  if (document.documentElement.requestFullscreen) {
-    document.documentElement.requestFullscreen().catch(() => {});
+  if(jumpV!==0||playerY>0){
+    playerY+=jumpV*dt;jumpV-=0.8*dt;
+    if(playerY<=0){playerY=0;jumpV=0}
   }
+  if(sliding>0)sliding-=dt;
 
+  spawn-=dt;
+  if(spawn<=0){addObstacle();spawn=Math.max(34,75-speed*3)}
+  obstacles.forEach(o=>{
+    o.y+=speed*dt;
+    if(o.y>440&&o.y<515&&o.lane===playerLane){
+      let safe=o.type==="barrier"?playerY>45:o.type==="sign"?sliding>0:false;
+      if(!safe)endGame();
+    }
+  });
+  coins.forEach(c=>{
+    c.y+=speed*dt;
+    if(!c.taken&&c.lane===playerLane&&Math.abs(c.y-475)<25){c.taken=true;coinCount++}
+  });
+  obstacles=obstacles.filter(o=>o.y<650);
+  coins=coins.filter(c=>c.y<630&&!c.taken);
+  draw();
+  if(running)raf=requestAnimationFrame(loop);
 }
-
-
-function stopPrank() {
-
-  document.getElementById("video").src = "";
-
-  // Exit fullscreen
-  if (document.fullscreenElement) {
-    document.exitFullscreen();
-  }
-
-  document.getElementById("prankPage").innerHTML = `
-
-    <h1>You just got rick rolled!</h1>
-
-    <button onclick="location.reload()">
-      Return to Adumbi
-    </button>
-
-  `;
-
-}
-
+document.getElementById("game").addEventListener("pointerdown",e=>{
+  canvasStartX=e.clientX;canvasStartY=e.clientY;
+});
+let canvasStartX=0,canvasStartY=0;
+document.getElementById("game").addEventListener("pointerup",e=>{
+  let dx=e.clientX-canvasStartX,dy=e.clientY-canvasStartY;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;
+  if(Math.abs(dx)>Math.abs(dy))move(dx>0?1:-1);
+  else if(dy<0)jump();else slide();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="a")move(-1);
+  if(e.key==="ArrowRight"||e.key==="d")move(1);
+  if(e.key==="ArrowUp"||e.key==="w"||e.key===" ")jump();
+  if(e.key==="ArrowDown"||e.key==="s")slide();
+});
+draw();
 </script>
-
 </body>
 </html>
